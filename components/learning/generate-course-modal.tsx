@@ -123,7 +123,10 @@ export function GenerateCourseModal({ topic }: GenerateCourseModalProps) {
                     .select()
                     .single()
 
-                if (moduleError) continue
+                if (moduleError) {
+                    console.error("Module insert error:", moduleError)
+                    throw moduleError
+                }
 
                 if (module.lessons && module.lessons.length > 0) {
                     const lessonsToInsert = module.lessons.map((lesson, lIndex) => ({
@@ -136,7 +139,11 @@ export function GenerateCourseModal({ topic }: GenerateCourseModalProps) {
                         practice_task: lesson.practice_task,
                         quiz_question: lesson.quiz_question,
                     }))
-                    await supabase.from("course_lessons").insert(lessonsToInsert)
+                    const { error: lessonError } = await supabase.from("course_lessons").insert(lessonsToInsert)
+                    if (lessonError) {
+                        console.error("Lesson insert error:", lessonError)
+                        throw lessonError
+                    }
                 }
             }
 
