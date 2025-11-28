@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { BookOpen, LogOut } from "lucide-react"
+import { BookOpen, LogOut, Brain, Trophy, Zap } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
@@ -22,12 +22,15 @@ export function Sidebar() {
     ]
 
     return (
-        <div className="flex h-full w-64 flex-col border-r bg-card">
-            <div className="flex h-14 items-center border-b px-6">
-                <span className="text-lg font-bold">Tom's Brain</span>
+        <div className="hidden h-full w-64 flex-col border-r bg-card md:flex">
+            <div className="flex h-16 items-center border-b px-6">
+                <Link href="/app/learning" className="flex items-center gap-2 font-bold text-xl">
+                    <Brain className="h-6 w-6 text-primary" />
+                    <span>Tom's Brain</span>
+                </Link>
             </div>
-            <div className="flex-1 py-4">
-                <nav className="space-y-1 px-2">
+            <div className="flex-1 py-6 px-4">
+                <nav className="space-y-2">
                     {links.map((link) => {
                         const Icon = link.icon
                         const isActive = pathname.startsWith(link.href)
@@ -36,9 +39,9 @@ export function Sidebar() {
                                 key={link.href}
                                 href={link.href}
                                 className={cn(
-                                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                                     isActive
-                                        ? "bg-primary/10 text-primary"
+                                        ? "bg-primary text-primary-foreground shadow-md"
                                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                 )}
                             >
@@ -47,12 +50,26 @@ export function Sidebar() {
                             </Link>
                         )
                     })}
+
+                    <div className="pt-4 mt-4 border-t">
+                        <p className="px-3 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+                            Your Progress
+                        </p>
+                        <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground opacity-70 cursor-not-allowed">
+                            <Trophy className="h-4 w-4 text-yellow-500" />
+                            Achievements
+                        </div>
+                        <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground opacity-70 cursor-not-allowed">
+                            <Zap className="h-4 w-4 text-orange-500" />
+                            Daily Streak: 0
+                        </div>
+                    </div>
                 </nav>
             </div>
             <div className="border-t p-4">
                 <button
                     onClick={handleSignOut}
-                    className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
                 >
                     <LogOut className="h-4 w-4" />
                     Sign Out
