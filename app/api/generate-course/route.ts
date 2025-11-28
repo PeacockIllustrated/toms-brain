@@ -8,6 +8,8 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 })
 
+export const maxDuration = 60; // Allow up to 60 seconds for AI generation
+
 export async function POST(request: Request) {
     try {
         const supabase = await createClient()
@@ -38,7 +40,7 @@ export async function POST(request: Request) {
 
         // Call OpenAI
         const completion = await openai.chat.completions.create({
-            model: "gpt-4o", // or gpt-4-turbo
+            model: "gpt-4o",
             messages: [
                 { role: "system", content: COURSE_SYSTEM_PROMPT },
                 {
@@ -61,7 +63,13 @@ export async function POST(request: Request) {
             throw new Error("No content received from AI")
         }
 
-        const coursePayload: GeneratedCoursePayload = JSON.parse(content)
+        let coursePayload: GeneratedCoursePayload
+        try {
+            coursePayload = JSON.parse(content)
+        } catch (parseError) {
+            console.error("JSON Parse Error:", parseError, content)
+            throw new Error("Failed to parse AI response")
+        }
 
         // Insert Course
         const { data: course, error: courseError } = await supabase
@@ -79,7 +87,8 @@ export async function POST(request: Request) {
             .single()
 
         if (courseError || !course) {
-            throw new Error("Failed to insert course")
+            console.error("Course Insert Error:", courseError)
+            throw new Error(`Failed to insert course: ${courseError?.message}`)
         }
 
         // Insert Modules
@@ -95,26 +104,35 @@ export async function POST(request: Request) {
                 .select()
                 .single()
 
-            if (moduleError || !moduleData) continue
+            if (moduleError || !moduleData) {
+                console.error("Module Insert Error:", moduleError)
+                throw new Error(`Failed to insert module: ${moduleError?.message}`)
+            }
 
             // Insert Lessons
-            const lessonsToInsert = module.lessons.map((lesson, lIndex) => ({
-                module_id: moduleData.id,
-                order_index: lIndex,
-                title: lesson.title,
-                objective: lesson.objective,
-                key_points: lesson.key_points,
-                estimated_minutes: lesson.estimated_minutes,
-                practice_task: lesson.practice_task,
-                quiz_question: lesson.quiz_question,
-            }))
+            if (module.lessons && module.lessons.length > 0) {
+                const lessonsToInsert = module.lessons.map((lesson, lIndex) => ({
+                    module_id: moduleData.id,
+                    order_index: lIndex,
+                    title: lesson.title,
+                    objective: lesson.objective,
+                    key_points: lesson.key_points,
+                    estimated_minutes: lesson.estimated_minutes,
+                    practice_task: lesson.practice_task,
+                    quiz_question: lesson.quiz_question,
+                }))
 
-            await supabase.from("course_lessons").insert(lessonsToInsert)
+                const { error: lessonError } = await supabase.from("course_lessons").insert(lessonsToInsert)
+                if (lessonError) {
+                    console.error("Lesson Insert Error:", lessonError)
+                    throw new Error(`Failed to insert lessons: ${lessonError.message}`)
+                }
+            }
         }
 
         return NextResponse.json({ courseId: course.id })
-    } catch (error) {
+    } catch (error: any) {
         console.error("Course generation error:", error)
-        return new NextResponse("Internal Server Error", { status: 500 })
+        return new NextResponse(JSON.stringify({ error: error.message }), { status: 500, headers: { 'Content-Type': 'application/json' } })
     }
 }
