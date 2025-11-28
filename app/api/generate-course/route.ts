@@ -1,12 +1,10 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
-import OpenAI from "openai"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 import { COURSE_SYSTEM_PROMPT } from "@/lib/ai/courseSystemPrompt"
 import { GeneratedCoursePayload } from "@/types/learning"
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-})
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "")
 
 export const maxDuration = 60; // Allow up to 60 seconds for AI generation
 
@@ -38,38 +36,37 @@ export async function POST(request: Request) {
             return new NextResponse("Topic not found or unauthorized", { status: 404 })
         }
 
-        // Call OpenAI
-        const completion = await openai.chat.completions.create({
-            model: "gpt-4o-mini", // Faster and cheaper, usually sufficient for this structure
-            messages: [
-                { role: "system", content: COURSE_SYSTEM_PROMPT },
-                {
-                    role: "user",
-                    content: JSON.stringify({
-                        topicTitle: topic.title,
-                        topicDescription: topic.description,
-                        contextArea: topic.context_area,
-                        difficulty,
-                        userPrompt: prompt,
-                    }),
-                },
-            ],
-            temperature: 0.7,
-            response_format: { type: "json_object" },
+        // Call Gemini
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+
+        const userMessage = JSON.stringify({
+            topicTitle: topic.title,
+            topicDescription: topic.description,
+            contextArea: topic.context_area,
+            difficulty,
+            userPrompt: prompt,
         })
 
-        const content = completion.choices[0].message.content
-        if (!content) {
+        const result = await model.generateContent([
+            COURSE_SYSTEM_PROMPT,
+            `CONTEXT: ${userMessage}`,
+            "IMPORTANT: Return ONLY valid JSON."
+        ])
+
+        const response = await result.response
+        const text = response.text()
+
+        if (!text) {
             throw new Error("No content received from AI")
         }
 
         let coursePayload: GeneratedCoursePayload
         try {
-            // Strip markdown code fences if present (common issue even with json_object mode)
-            const cleanContent = content.replace(/```json\n?|```/g, "").trim()
+            // Strip markdown code fences if present
+            const cleanContent = text.replace(/```json\n?|```/g, "").trim()
             coursePayload = JSON.parse(cleanContent)
         } catch (parseError) {
-            console.error("JSON Parse Error:", parseError, content)
+            console.error("JSON Parse Error:", parseError, text)
             throw new Error("Failed to parse AI response. The model output was not valid JSON.")
         }
 
