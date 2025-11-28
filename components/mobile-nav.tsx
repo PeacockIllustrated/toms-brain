@@ -13,6 +13,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogDescription,
 } from "@/components/ui/dialog"
 
 export function MobileNav() {
@@ -49,6 +50,11 @@ export function MobileNav() {
                             <Brain className="h-6 w-6 text-primary" />
                             Tom's Brain
                         </DialogTitle>
+                        <div className="sr-only">
+                            <DialogDescription>
+                                Navigation menu for mobile devices.
+                            </DialogDescription>
+                        </div>
                     </DialogHeader>
                     <div className="flex flex-col justify-between h-full pb-6">
                         <nav className="grid gap-2 py-6">
