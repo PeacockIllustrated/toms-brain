@@ -15,13 +15,14 @@ import { notFound } from "next/navigation"
 export const dynamic = "force-dynamic"
 
 interface PageProps {
-    params: {
+    params: Promise<{
         id: string
-    }
+    }>
 }
 
 export default async function CoursePage({ params }: PageProps) {
     const supabase = await createClient()
+    const { id } = await params
 
     const { data: course } = await supabase
         .from("courses")
@@ -32,7 +33,7 @@ export default async function CoursePage({ params }: PageProps) {
         lessons:course_lessons(*)
       )
     `)
-        .eq("id", params.id)
+        .eq("id", id)
         .single()
 
     if (!course) {

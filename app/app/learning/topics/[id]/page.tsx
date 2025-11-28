@@ -9,19 +9,20 @@ import { notFound } from "next/navigation"
 export const dynamic = "force-dynamic"
 
 interface PageProps {
-    params: {
+    params: Promise<{
         id: string
-    }
+    }>
 }
 
 export default async function TopicPage({ params }: PageProps) {
     const supabase = await createClient()
+    const { id } = await params
 
     // Fetch topic
     const { data: topic } = await supabase
         .from("learning_topics")
         .select("*")
-        .eq("id", params.id)
+        .eq("id", id)
         .single()
 
     if (!topic) {
