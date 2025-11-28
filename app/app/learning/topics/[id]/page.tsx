@@ -32,11 +32,7 @@ export default async function TopicPage({ params }: PageProps) {
     // Fetch courses
     const { data: courses } = await supabase
         .from("courses")
-        .select("*, course_modules(count), course_lessons(count)") // Note: simple count might need adjustment depending on schema relation, but let's try standard count
-        // Actually, Supabase count on related tables via select is tricky without proper setup. 
-        // Let's just fetch courses and we can fetch counts separately or just show basic info for now.
-        // Better: .select("*, modules:course_modules(count)") if relation is named.
-        // Let's stick to simple select for now and maybe just show static or fetch properly.
+        .select("*")
         .eq("learning_topic_id", topic.id)
         .order("created_at", { ascending: false })
 
