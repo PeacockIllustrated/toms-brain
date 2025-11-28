@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
         // Call OpenAI
         const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-4o-mini", // Faster and cheaper, usually sufficient for this structure
             messages: [
                 { role: "system", content: COURSE_SYSTEM_PROMPT },
                 {
@@ -65,10 +65,12 @@ export async function POST(request: Request) {
 
         let coursePayload: GeneratedCoursePayload
         try {
-            coursePayload = JSON.parse(content)
+            // Strip markdown code fences if present (common issue even with json_object mode)
+            const cleanContent = content.replace(/```json\n?|```/g, "").trim()
+            coursePayload = JSON.parse(cleanContent)
         } catch (parseError) {
             console.error("JSON Parse Error:", parseError, content)
-            throw new Error("Failed to parse AI response")
+            throw new Error("Failed to parse AI response. The model output was not valid JSON.")
         }
 
         // Insert Course
