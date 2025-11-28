@@ -247,31 +247,77 @@ export function GenerateCourseModal({ topic }: GenerateCourseModalProps) {
                     </TabsContent>
 
                     <TabsContent value="import">
-                        <form onSubmit={handleImport} className="space-y-4 py-4">
-                            <div className="grid gap-2">
-                                <label htmlFor="json-import" className="text-sm font-medium">
-                                    Paste JSON
-                                </label>
-                                <textarea
-                                    id="json-import"
-                                    name="json"
-                                    placeholder='{ "title": "...", "modules": [...] }'
-                                    className="flex min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                />
+                        <div className="space-y-4 py-4">
+                            <div className="rounded-md bg-muted p-4">
+                                <div className="mb-2 flex items-center justify-between">
+                                    <h4 className="text-sm font-medium">1. Copy Prompt Structure</h4>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 text-xs"
+                                        onClick={() => {
+                                            const snippet = `Create a course about "${topic.title}" returning ONLY valid JSON with this structure:
+{
+  "title": "string",
+  "short_summary": "string",
+  "difficulty": "basic" | "intermediate" | "advanced",
+  "estimated_total_minutes": number,
+  "modules": [
+    {
+      "title": "string",
+      "summary": "string",
+      "lessons": [
+        {
+          "title": "string",
+          "objective": "string",
+          "key_points": ["string"],
+          "estimated_minutes": number,
+          "practice_task": "string",
+          "quiz_question": "string"
+        }
+      ]
+    }
+  ]
+}`
+                                            navigator.clipboard.writeText(snippet)
+                                            alert("Prompt copied to clipboard!")
+                                        }}
+                                    >
+                                        <Sparkles className="mr-2 h-3 w-3" />
+                                        Copy Prompt
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Paste this into ChatGPT/Claude to generate the JSON.
+                                </p>
                             </div>
-                            <DialogFooter>
-                                <Button type="submit" disabled={loading} variant="secondary">
-                                    {loading ? (
-                                        "Importing..."
-                                    ) : (
-                                        <>
-                                            <Upload className="mr-2 h-4 w-4" />
-                                            Import Course
-                                        </>
-                                    )}
-                                </Button>
-                            </DialogFooter>
-                        </form>
+
+                            <form onSubmit={handleImport} className="space-y-4">
+                                <div className="grid gap-2">
+                                    <label htmlFor="json-import" className="text-sm font-medium">
+                                        2. Paste JSON Response
+                                    </label>
+                                    <textarea
+                                        id="json-import"
+                                        name="json"
+                                        placeholder='{ "title": "...", "modules": [...] }'
+                                        className="flex min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    />
+                                </div>
+                                <DialogFooter>
+                                    <Button type="submit" disabled={loading} variant="secondary">
+                                        {loading ? (
+                                            "Importing..."
+                                        ) : (
+                                            <>
+                                                <Upload className="mr-2 h-4 w-4" />
+                                                Import Course
+                                            </>
+                                        )}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </div>
                     </TabsContent>
                 </Tabs>
             </DialogContent>
